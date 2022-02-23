@@ -15,24 +15,28 @@ async def on_ready():
 
 async def checkonline(channel,person,online):
     while True:
-        for i in client.guilds:
+        member=''
+        for i in client.guilds: #finds the member in all servers that the bot is in. If the person is not in a server the bot is in, the command will fail.
             try:
                 member = i.get_member(person)
                 break
             except:
                 pass
+        if member == '':
+            channel.send(f"'{person}' is not in a server that is shared by this bot")
+            return
         try:
-            dict=pickle.load(open(r'status','rb'))
+            dict=pickle.load(open(r'status','rb')) #stores current status in pickled dictionary
         except:
             dict={1:''}
-        if str(member.status) == 'offline' and online:
+        if str(member.status) == 'offline' and online: #checks if person is offline, but last logged as online
             online=False
             await channel.send(f"{member.name} is now offline")
             dict[person]=''
-        elif str(member.status) != 'offline' and not online:
+        elif str(member.status) != 'offline' and not online: #checks if person is online, but last logged as offline
             online=True
             try:
-                if 'playing' not in member.activities[0].type:
+                if 'playing' not in member.activities[0].type: # to ensure that the bot is not detecting a person playing a game instead
                     status = str(member.activities[0].name)
                     await channel.send(f"{member.name} is back online. Their status is '{status}'")      
             except:
@@ -55,7 +59,7 @@ async def checkonline(channel,person,online):
         pickle.dump(dict,open(r'status','wb'))  
         await asyncio.sleep(0)
 
-async def track(channel,person):
+async def track(channel,person): #this whole block of code is just to do a first status check to set variables in the right place before running the loop
     member = client.guilds[0].get_member(person)
     await channel.send(f"Tracking {member.name}")
     try:
