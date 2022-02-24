@@ -7,6 +7,15 @@ intents.members = True
 
 client = discord.Client(intents=intents,status='HI')
 
+def findperson(person):
+    member=''
+    for i in client.guilds:
+        try:
+            member = i.get_member(person)
+            break
+        except:pass
+    return member
+
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
@@ -15,13 +24,7 @@ async def on_ready():
 
 async def checkonline(channel,person,online):
     while True:
-        member=''
-        for i in client.guilds: #finds the member in all servers that the bot is in. If the person is not in a server the bot is in, the command will fail.
-            try:
-                member = i.get_member(person)
-                break
-            except:
-                pass
+        member = findperson(person)
         if member == '':
             channel.send(f"'{person}' is not in a server that is shared by this bot")
             return
@@ -31,18 +34,20 @@ async def checkonline(channel,person,online):
             dict={1:''}
         if str(member.status) == 'offline' and online: #checks if person is offline, but last logged as online
             online=False
-            await channel.send(f"{member.name} is now offline")
-            dict[person]=''
+            # await channel.send(f"{member.name} is now offline")
+            # dict[person]=''
         elif str(member.status) != 'offline' and not online: #checks if person is online, but last logged as offline
             online=True
             try:
                 if 'playing' not in member.activities[0].type: # to ensure that the bot is not detecting a person playing a game instead
-                    status = str(member.activities[0].name)
-                    await channel.send(f"{member.name} is back online. Their status is '{status}'")      
+                    pass
+                    # status = str(member.activities[0].name)
+                    # await channel.send(f"{member.name} is back online. Their status is '{status}'")    
             except:
-                status=''
-                await channel.send(f'{member.name} is back online, but does not have a status')
-            dict[person]=status
+                pass
+                # status=''
+                # await channel.send(f'{member.name} is back online, but does not have a status')
+            # dict[person]=status
         else:
             try:
                 status = str(member.activities[0].name)
@@ -60,7 +65,10 @@ async def checkonline(channel,person,online):
         await asyncio.sleep(0)
 
 async def track(channel,person): #this whole block of code is just to do a first status check to set variables in the right place before running the loop
-    member = client.guilds[0].get_member(person)
+    member = findperson(person)
+    if member == '':
+        channel.send(f"'{person}' is not in a server that is shared by this bot")
+        return
     await channel.send(f"Tracking {member.name}")
     try:
         dict = pickle.load(open(r'status','rb'))
@@ -75,9 +83,11 @@ async def track(channel,person): #this whole block of code is just to do a first
         dict[person]=status
     except:
         if online:
-            await channel.send(f"{member.name} does not have a status")
+            pass
+            # await channel.send(f"{member.name} does not have a status")
         else:
-            await channel.send(f"{member.name} is offline")
+            pass
+            # await channel.send(f"{member.name} is offline")
         dict[person]=""
     client.loop.create_task(checkonline(channel,person,online))
 
